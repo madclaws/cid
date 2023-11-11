@@ -15,6 +15,8 @@ defmodule Cid do
   https://github.com/dwyl/learn-ipfs/issues
   """
 
+  @type hash_type :: :sha1 | :sha2_256 | :sha2_512 | :sha3 | :blake2b | :blake2s | :blake3
+
   @doc """
   `cid/1` Returns a Content ID (CID)
   identical to the `cid` returned by `IPFS` for the same input data.if given the same data.
@@ -48,10 +50,11 @@ defmodule Cid do
       iex> Cid.cid("hello")
       "invalid base"
   """
-  @spec cid(String.t | map() | struct()) :: String.t
-  def cid(value) do
+  @spec cid(String.t | map() | struct(), hash_type()) :: String.t
+  def cid(value, hash_type \\ :sha2_256)
+  def cid(value, hash_type) do
     value
-    |> create_multihash()
+    |> create_multihash(hash_type)
     |> create_cid()
   end
 
@@ -62,34 +65,35 @@ defmodule Cid do
   # map and then create_multihash is called again
   # The %_{} syntax works like regular pattern matching. The underscore, _,
   # simply matches any Struct/Module name.
-  defp create_multihash(%_{} = struct) do
+  defp create_multihash(value, hash_type)
+
+  defp create_multihash(%_{} = struct, hash_type) do
     struct
     |> Map.from_struct()
-    |> create_multihash()
+    |> create_multihash(hash_type)
   end
 
   # if create_multihash is called with a map the map is converted into a JSON
   # string and then create_multihash is called again
-  defp create_multihash(map) when is_map(map) do
+  defp create_multihash(map, hash_type) when is_map(map) do
     map
     |> Jason.encode!()
-    |> create_multihash()
+    |> create_multihash(hash_type)
   end
 
   # if create_multihash is called with a string then the string is converted
   # into a multihash. This uses the erlang crypto hash function. For more
   # infomation on using # erlang functions in elixir see...
   # https://stackoverflow.com/questions/35283888/how-to-call-an-erlang-function-in-elixir
-  defp create_multihash(str) when is_binary(str) do
-    digest = :crypto.hash(:sha256, str)
-    {:ok, multihash} = Multihash.encode(:sha2_256, digest)
-
+  defp create_multihash(str, hash_type) when is_binary(str) do
+    digest = create_digest(str, hash_type)
+    {:ok, multihash} = Multihash.encode(hash_type, digest)
     multihash
   end
 
   # if create_multihash is called something that is not a string, map or struct
   # then it returns an error.
-  defp create_multihash(_), do: {:error, "invalid data type"}
+  defp create_multihash(_, _), do: {:error, "invalid data type"}
 
   # if an error is passed in return error message
   defp create_cid({:error, msg}), do: msg
@@ -138,4 +142,12 @@ defmodule Cid do
   defp add_multibase_prefix(suffix, :base58), do: "z" <> suffix
   defp add_multibase_prefix(suffix, :base32), do: "b" <> suffix
 
+  @spec create_digest(String.t(), hash_type()) :: binary()
+  defp create_digest(data, :sha2_256) do
+    :crypto.hash(:sha256, data)
+  end
+
+  defp create_digest(_, _) do
+    raise "Unknow hash type"
+  end
 end

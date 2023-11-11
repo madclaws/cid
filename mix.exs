@@ -30,9 +30,10 @@ defmodule Cid.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_multihash, "~> 2.0"},
+      {:ex_multihash, git: "https://github.com/madclaws/ex-multihash.git"},
       {:jason, "~> 1.1"},
       {:b58, "~> 1.0.3"},
+      # {:blake3, "~> 1.0"},
       {:excoveralls, "~> 0.10", only: :test},
       {:stream_data, "~> 0.6.0", only: :test},
       {:ex_doc, "~> 0.30.3", only: :dev}
