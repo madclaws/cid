@@ -147,6 +147,10 @@ defmodule Cid do
     :crypto.hash(:sha256, data)
   end
 
+  defp create_digest(data, :blake3) do
+    Blake3.hash(data)
+  end
+
   defp create_digest(_, _) do
     raise "Unknow hash type"
   end
