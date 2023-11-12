@@ -10,7 +10,7 @@ defmodule CidTest do
 
   defstruct [:a]
   @filename "random.txt"
-  @ipfs_args ["add", @filename, "-n", "--cid-version", "1"]
+  @ipfs_args ["add", @filename, "-n", "--cid-version=1"]
   @ipfs_cidv0 ["add", @filename, "-n", "--raw-leaves"]
   @ipfs_convert_cid ["cid", "base32"]
   @dummy_map %{
@@ -113,8 +113,10 @@ defmodule CidTest do
   # see: https://docs.ipfs.io/introduction/usage/
   def compare_ipfs_cid(val) do
     File.write(@filename, val)
+
     {added_val, 0} = System.cmd("ipfs", @ipfs_args)
-    <<"added ", cid::bytes-size(59), _::binary>> = added_val
+
+    <<"added ", cid::bytes-size(49), _::binary>> = added_val
 
     assert cid == Cid.cid(val)
 
