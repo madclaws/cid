@@ -15,7 +15,7 @@ defmodule Cid.MixProject do
       preferred_cli_env: [
         c: :test,
         coveralls: :test,
-        "coveralls.json": :test,
+        "coveralls.json": :test
       ]
     ]
   end

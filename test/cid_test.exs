@@ -79,7 +79,7 @@ defmodule CidTest do
     # Tagged to allow you to ignore these tests if you don't have ipfs installed
     @tag :ipfs
     property "test with 50 random strings" do
-      check all str <- StreamData.string(:ascii), max_runs: 50 do
+      check all(str <- StreamData.string(:ascii), max_runs: 50) do
         compare_ipfs_cid(str)
       end
     end
@@ -89,7 +89,7 @@ defmodule CidTest do
     # Tagged to allow you to ignore these tests if you don't have ipfs installed
     @tag :ipfs
     property "test with 50 random maps" do
-      check all map <- random_map(), max_runs: 50 do
+      check all(map <- random_map(), max_runs: 50) do
         map
         |> Jason.encode!()
         |> compare_ipfs_cid()
@@ -102,12 +102,14 @@ defmodule CidTest do
     setup do
       Application.put_env(:excid, :base, :base32)
     end
+
     property "test cidv1 base32 with 50 random string" do
-      check all str <- StreamData.string(:ascii), max_runs: 50 do
+      check all(str <- StreamData.string(:ascii), max_runs: 50) do
         compare_ipfs_cid_base32(str)
       end
     end
   end
+
   # Calls IPFS `add` function to generate cid
   # then compares result to result of our `Cid.cid` function
   # see: https://docs.ipfs.io/introduction/usage/
@@ -125,9 +127,9 @@ defmodule CidTest do
 
   def compare_ipfs_cid_base32(val) do
     File.write(@filename, val)
-    {added_val, 0} = System.cmd("ipfs", @ipfs_cidv0 )
+    {added_val, 0} = System.cmd("ipfs", @ipfs_cidv0)
     <<"added ", cid::bytes-size(49), _::binary>> = added_val
-    {cidv1, 0} = System.cmd("ipfs", (@ipfs_convert_cid ++ [cid]))
+    {cidv1, 0} = System.cmd("ipfs", @ipfs_convert_cid ++ [cid])
 
     assert String.replace(cidv1, "\n", "") == Cid.cid(val)
   end

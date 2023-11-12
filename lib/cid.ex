@@ -50,12 +50,13 @@ defmodule Cid do
       iex> Cid.cid("hello")
       "invalid base"
   """
-  @spec cid(String.t | map() | struct(), hash_type()) :: String.t
+  @spec cid(String.t() | map() | struct(), hash_type()) :: {:ok, String.t()}
   def cid(value, hash_type \\ :sha2_256)
+
   def cid(value, hash_type) do
-    value
-    |> create_multihash(hash_type)
-    |> create_cid()
+    with {:ok, multihash} <- create_multihash(value, hash_type) do
+      create_cid(multihash)
+    end
   end
 
   # create_multihash returns a multihash. A multihash is a self describing hash.
@@ -76,9 +77,10 @@ defmodule Cid do
   # if create_multihash is called with a map the map is converted into a JSON
   # string and then create_multihash is called again
   defp create_multihash(map, hash_type) when is_map(map) do
-    map
-    |> Jason.encode!()
-    |> create_multihash(hash_type)
+    case Jason.decode(map) do
+      {:ok, data} -> create_multihash(data, hash_type)
+      _ -> {:error, "Failed to decode JSON"}
+    end
   end
 
   # if create_multihash is called with a string then the string is converted
@@ -86,17 +88,17 @@ defmodule Cid do
   # infomation on using # erlang functions in elixir see...
   # https://stackoverflow.com/questions/35283888/how-to-call-an-erlang-function-in-elixir
   defp create_multihash(str, hash_type) when is_binary(str) do
-    digest = create_digest(str, hash_type)
-    {:ok, multihash} = Multihash.encode(hash_type, digest)
-    multihash
+    with {:ok, digest} <- create_digest(str, hash_type) do
+      Multihash.encode(hash_type, digest)
+    end
   end
 
   # if create_multihash is called something that is not a string, map or struct
   # then it returns an error.
   defp create_multihash(_, _), do: {:error, "invalid data type"}
 
+  @spec create_cid(binary()) :: {:ok, String.t()} | {:error, String.t()}
   # if an error is passed in return error message
-  defp create_cid({:error, msg}), do: msg
 
   # takes a multihash and retuns a CID
   # Base58Encode.encode58 or Base.encode32 takes the binary returned from create_cid_suffix and converts
@@ -104,13 +106,14 @@ defmodule Cid do
   # For more info on base58 strings see https://en.wikipedia.org/wiki/Base58
   defp create_cid(multihash) when is_binary(multihash) do
     base = Application.get_env(:excid, :base) || :base32
-    hash = multihash
-    |> create_cid_suffix()
-    |> encode_with_base(base)
 
-    case hash do
-      {:ok, h} -> add_multibase_prefix(h, base)
-      {:error, e} -> e
+    hash =
+      multihash
+      |> create_cid_suffix()
+      |> encode_with_base(base)
+
+    with {:ok, h} <- hash do
+      {:ok, add_multibase_prefix(h, base)}
     end
   end
 
@@ -129,11 +132,8 @@ defmodule Cid do
   defp encode_with_base(binary, base) do
     case base do
       :base58 -> {:ok, Base58.encode(binary)}
-
       :base32 -> {:ok, Base.encode32(binary, case: :lower, padding: false)}
-
       _ -> {:error, "invalid base"}
-
     end
   end
 
@@ -142,16 +142,16 @@ defmodule Cid do
   defp add_multibase_prefix(suffix, :base58), do: "z" <> suffix
   defp add_multibase_prefix(suffix, :base32), do: "b" <> suffix
 
-  @spec create_digest(String.t(), hash_type()) :: binary()
+  @spec create_digest(String.t(), hash_type()) :: {:ok, binary()} | {:error, String.t()}
   defp create_digest(data, :sha2_256) do
-    :crypto.hash(:sha256, data)
+    {:ok, :crypto.hash(:sha256, data)}
   end
 
   defp create_digest(data, :blake3) do
-    Blake3.hash(data)
+    {:ok, Blake3.hash(data)}
   end
 
   defp create_digest(_, _) do
-    raise "Unknow hash type"
+    {:error, "Unknow hash type"}
   end
 end
