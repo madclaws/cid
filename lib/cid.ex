@@ -26,29 +26,29 @@ defmodule Cid do
 
       iex> Application.put_env(:excid, :base, :base32)
       iex> Cid.cid("hello")
-      "bafkreibm6jg3ux5qumhcn2b3flc3tyu6dmlb4xa7u5bf44yegnrjhc4yeq"
+      {:ok, "bafkreibm6jg3ux5qumhcn2b3flc3tyu6dmlb4xa7u5bf44yegnrjhc4yeq"}
 
       iex> Application.put_env(:excid, :base, :base58)
       iex> Cid.cid("hello")
-      "zb2rhZfjRh2FHHB2RkHVEvL2vJnCTcu7kwRqgVsf9gpkLgteo"
+      {:ok, "zb2rhZfjRh2FHHB2RkHVEvL2vJnCTcu7kwRqgVsf9gpkLgteo"}
 
       iex> Application.put_env(:excid, :base, :base32)
       iex> Cid.cid(%{key: "value"})
-      "bafkreihehk6pgn2sisbzyajpsyz7swdc2izkswya2w6hgsftbgfz73l7gi"
+      {:ok, "bafkreihehk6pgn2sisbzyajpsyz7swdc2izkswya2w6hgsftbgfz73l7gi"}
 
       iex> Application.put_env(:excid, :base, :base58)
       iex> Cid.cid(%{key: "value"})
-      "zb2rhn1C6ZDoX6rdgiqkqsaeK7RPKTBgEi8scchkf3xdsi8Bj"
+      {:ok, "zb2rhn1C6ZDoX6rdgiqkqsaeK7RPKTBgEi8scchkf3xdsi8Bj"}
 
       iex> Cid.cid(1234)
-      "invalid data type"
+      {:error, "invalid data type"}
 
       iex> Cid.cid([1,2,3,"four"])
-      "invalid data type"
+      {:error, "invalid data type"}
 
       iex> Application.put_env(:excid, :base, :wrong_base)
       iex> Cid.cid("hello")
-      "invalid base"
+      {:error, "invalid base"}
   """
   @spec cid(String.t() | map() | struct(), hash_type()) :: {:ok, String.t()}
   def cid(value, hash_type \\ :sha2_256)
@@ -152,6 +152,6 @@ defmodule Cid do
   end
 
   defp create_digest(_, _) do
-    {:error, "Unknow hash type"}
+    {:error, "Unknown hash type"}
   end
 end

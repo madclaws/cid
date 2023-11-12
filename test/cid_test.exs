@@ -25,19 +25,19 @@ defmodule CidTest do
     end
 
     test "returns the same CID as IPFS when given a string" do
-      assert "zb2rhhnbH6zTaAj948YVsYxW4c5AY6TfJURC9EGhQum3Kq7b3" == Cid.cid("Hello World")
+      assert {:ok, "zb2rhhnbH6zTaAj948YVsYxW4c5AY6TfJURC9EGhQum3Kq7b3"} == Cid.cid("Hello World")
     end
 
     test "returns the same CID as IPFS when given a map" do
-      assert "zb2rhdeaHh2UHghBcwxeFP1GRUYETDH96DkV6oppiz5Gk1xGN" == Cid.cid(%{a: "a"})
+      assert {:ok, "zb2rhdeaHh2UHghBcwxeFP1GRUYETDH96DkV6oppiz5Gk1xGN"} == Cid.cid(%{a: "a"})
     end
 
     test "returns the same CID as IPFS when given a struct" do
-      assert "zb2rhdeaHh2UHghBcwxeFP1GRUYETDH96DkV6oppiz5Gk1xGN" == Cid.cid(%__MODULE__{a: "a"})
+      assert {:ok, "zb2rhdeaHh2UHghBcwxeFP1GRUYETDH96DkV6oppiz5Gk1xGN"} == Cid.cid(%__MODULE__{a: "a"})
     end
 
     test "returns an error if given invalid data type" do
-      assert Cid.cid(2) == "invalid data type"
+      assert {:error, "invalid data type"} = Cid.cid(2)
     end
 
     test "returns the same CID regardless of order of items in map" do
@@ -70,8 +70,8 @@ defmodule CidTest do
     end
 
     test "empty values also work" do
-      assert Cid.cid("") == "zb2rhmy65F3REf8SZp7De11gxtECBGgUKaLdiDj7MCGCHxbDW"
-      assert Cid.cid(%{}) == "zb2rhbE2775XANjTsRTV9sxfFMWxrGuMWYgshDn9xvjG69fZ3"
+      assert {:ok, "zb2rhmy65F3REf8SZp7De11gxtECBGgUKaLdiDj7MCGCHxbDW"} = Cid.cid("")
+      assert {:ok, "zb2rhbE2775XANjTsRTV9sxfFMWxrGuMWYgshDn9xvjG69fZ3"} = Cid.cid(%{})
     end
 
     # Property based tests that generate random strings and
