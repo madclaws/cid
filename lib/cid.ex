@@ -77,9 +77,9 @@ defmodule Cid do
   # if create_multihash is called with a map the map is converted into a JSON
   # string and then create_multihash is called again
   defp create_multihash(map, hash_type) when is_map(map) do
-    case Jason.decode(map) do
+    case Jason.encode(map) do
       {:ok, data} -> create_multihash(data, hash_type)
-      _ -> {:error, "Failed to decode JSON"}
+      _ -> {:error, "Failed to encode JSON"}
     end
   end
 
